@@ -4,10 +4,28 @@ from glob import glob
 from utils import run_command
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate STAR second-pass genome index.")
-    parser.add_argument("-o", "--organism", choices=["Homo", "Mus"], required=True)
-    parser.add_argument("-th", "--threads", type=int, default=6)
-    parser.add_argument("-nv", "--verbose", action="store_false", help="Disable verbose output.")
+    parser = argparse.ArgumentParser(
+        description="""
+Generate STAR second-pass genome index.
+
+This script collects SJ.out.tab splice junction files from a first-pass STAR alignment
+and generates a second-pass genome index to improve alignment accuracy.
+"""
+    )
+
+    parser.add_argument(
+        "-o", "--organism", choices=["Homo", "Mus"], required=True,
+        help="Specify organism: Homo (human) or Mus (mouse)."
+    )
+    parser.add_argument(
+        "-th", "--threads", type=int, default=6,
+        help="Number of threads to use for STAR (default: 6)."
+    )
+    parser.add_argument(
+        "-nv", "--verbose", action="store_true", default=True,
+        help="Enable verbose output (default: True)."
+    )
+
     args = parser.parse_args()
 
     first_pass_dir = "temporary/star/first_pass"
@@ -19,7 +37,7 @@ def main():
     print("=== STEP 2: Collect SJ.out.tab files ===")
     sj_files = glob(os.path.join(first_pass_dir, "*SJ.out.tab"))
     if not sj_files:
-        raise FileNotFoundError("No SJ.out.tab files found. Run first-pass first.")
+        raise FileNotFoundError("No SJ.out.tab files found. Run first-pass STAR alignment first.")
 
     print(f"Found {len(sj_files)} SJ.out.tab files.")
     print("\n=== STEP 3: Generate second-pass genome index ===")

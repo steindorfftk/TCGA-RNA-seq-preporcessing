@@ -7,14 +7,23 @@ from utils import run_command
 def main():
     start_time = time.time()
 
-    parser = argparse.ArgumentParser(description="Run featureCounts on STAR alignment BAM files.")
+    parser = argparse.ArgumentParser(
+        description="""
+Run featureCounts on STAR-aligned BAM files.
+
+This script counts reads mapping to genes using featureCounts.
+It supports single-end (SE) and paired-end (PE) reads, and can optionally
+delete BAM files after processing to save memory.
+"""
+    )
+
     parser.add_argument(
-        "-nv", "--verbose", action="store_false",
-        help="Disable verbose output."
+        "-nv", "--verbose", action="store_true", default=True,
+        help="Enable verbose output (default: True)."
     )
     parser.add_argument(
         "-e", "--endtype", choices=["se", "pe"], required=True,
-        help="Specify end type: 'se' for single-end or 'pe' for paired-end."
+        help="Specify sequencing type: 'se' for single-end or 'pe' for paired-end reads."
     )
     parser.add_argument(
         "-lm", "--lowmemory", action="store_true",
@@ -23,7 +32,7 @@ def main():
 
     args = parser.parse_args()
 
-    # Hardcoded annotation path (GTF)
+    # Annotation GTF file
     annotation_path = "temporary/star/annotation/gencode.v36.annotation.gtf"
 
     # Directories
@@ -37,7 +46,7 @@ def main():
         print("❌ No BAM files found in temporary/star/second_pass_output/. Check your STAR run.")
         return
 
-    # Determine featureCounts flag based on end type
+    # featureCounts flag for paired-end
     paired_flag = "-p" if args.endtype == "pe" else ""
 
     for bam_file in bam_files:
@@ -67,11 +76,10 @@ def main():
     # Clean and extract gene counts
     for txt_file in counts_output_dir.glob("*_featurecounts.txt"):
         srr = txt_file.stem.split("_")[0]
-        clean_output = Path("output") / f"{srr}_gene_counts.tabular"
+        clean_output = counts_output_dir / f"{srr}_gene_counts.tabular"
         os.makedirs(clean_output.parent, exist_ok=True)
 
-        # Remove header lines and keep only gene_id + count column
-        # featureCounts default: counts are in column 7
+        # Remove header lines and keep only gene_id + count column (column 7)
         run_command(f"sed -i '/^#/d' {txt_file}", args.verbose)
         run_command(f"cut -f 1,7 {txt_file} > {clean_output}", args.verbose)
 

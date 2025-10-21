@@ -4,10 +4,8 @@ import os
 from pathlib import Path
 from multiprocessing import Pool
 
-# Usage: python3 01_download.py -o Mus/Homo -e pe -m
-
 def run_command(command, verbose=True):
-    """Run shell command and handle errors."""
+    """Run a shell command and handle errors."""
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
     if verbose:
         print(result.stdout)
@@ -15,11 +13,43 @@ def run_command(command, verbose=True):
         print(f"Error: {result.stderr}")
 
 # Argument Parsing
-parser = argparse.ArgumentParser(description="Download SRA files, convert to FASTQ, and run initial FastQC.")
-parser.add_argument('-nv', '--verbose', action='store_false', help='Disable verbose output')
-parser.add_argument('-m', '--memory', action='store_true', help='Delete SRA files after conversion to save memory')
-parser.add_argument('-o', '--organism', type=str, required=True, choices=['Mus', 'Homo'], help='Organism name')
-parser.add_argument('-e', '--end', type=str, default='se', choices=['se', 'pe'], help='Single-end (se) or paired-end (pe) sequencing')
+parser = argparse.ArgumentParser(
+    description="""
+Download SRA files, convert them to FASTQ format, and run initial FastQC analysis.
+
+Steps performed by this script:
+1. Download SRA data from accession numbers listed in input/SRRAccList.txt
+2. Convert SRA files to FASTQ using fasterq-dump
+3. Run FastQC on all FASTQ files
+4. Optionally delete SRA files after conversion to save memory
+"""
+)
+
+parser.add_argument(
+    '-nv', '--verbose',
+    action='store_true',
+    default=True,
+    help='Enable verbose output (default: True)'
+)
+parser.add_argument(
+    '-m', '--memory',
+    action='store_true',
+    help='Delete SRA files after conversion to save memory'
+)
+parser.add_argument(
+    '-o', '--organism',
+    type=str,
+    required=True,
+    choices=['Mus', 'Homo'],
+    help='Specify the organism: Mus (mouse) or Homo (human)'
+)
+parser.add_argument(
+    '-e', '--end',
+    type=str,
+    default='se',
+    choices=['se', 'pe'],
+    help='Specify sequencing type: single-end (se) or paired-end (pe)'
+)
 
 args = parser.parse_args()
 
